@@ -28,14 +28,15 @@ export function StepperControls({previousURL, nextURL}: StepperControlsProps) {
 
   return (
     <Stack direction="row" spacing={1}>
-      <Button onClick={handlePreviousStep} disabled={isFirst} sx={{ textTransform: 'none',color: 'black' }}>
+      <Button onClick={handlePreviousStep} disabled={isFirst} sx={{ textTransform: 'none',color: 'black', display: {xs: 'none', md: 'block'} }}>
         Back
       </Button>
       <Button
         variant="contained"
         disableElevation
         onClick={handleNextStep}
-        sx={{ textTransform: 'none', backgroundColor: '#B89072' }}
+        size='large'
+        sx={{textTransform: 'none', backgroundColor: 'Black', width: {xs: '100%', md: 'auto'}}}
       >
         {isLast ? 'Finish' : 'Next'}
       </Button>
