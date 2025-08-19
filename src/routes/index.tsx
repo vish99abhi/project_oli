@@ -5,6 +5,7 @@ import TreatmentServices from '../pages/TreatmentServices';
 import Location from '../pages/Location';
 import AppointmentDate from '../pages/AppointmentDate';
 import UserDetails from '../pages/UserDetails';
+import BookingSummary from '../pages/BookingSummary';
 
 const routes = [
   {
@@ -15,7 +16,8 @@ const routes = [
       { index: true, element: <Location /> },
       { path: 'service', element: <TreatmentServices />},
       { path: 'date', element: <AppointmentDate />},
-      { path: 'details', element: <UserDetails/>}
+      { path: 'details', element: <UserDetails/>},
+      { path: 'booking', element: <BookingSummary/>}
     ],
   },
 ];

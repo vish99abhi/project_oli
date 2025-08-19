@@ -6,8 +6,11 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import Steppers from "../common/Steppers";
 import { Divider } from "@mui/material";
+import { useLocation } from "react-router-dom";
 
 function AppHeader() {
+  const { pathname } = useLocation();
+  const isHide = pathname === '/booking'
   return (
     <AppBar position="static" sx={{ backgroundColor: "whitesmoke", boxShadow: "none" }}>
       <Container maxWidth="xl">
@@ -64,7 +67,7 @@ function AppHeader() {
               maxWidth: "50vw",
             }}
           >
-            <Box sx={{ width: "100%" }}>
+            <Box sx={{ width: "100%", visibility: isHide ? "hidden" : null }}>
               <Steppers />
             </Box>
           </Box>

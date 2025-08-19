@@ -1,24 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import { StepperControls } from "../common/StepperControls";
-import BookingDetailsForm from "../components/BookingDetailsForm";
+import ProviderSummaryCard from "../components/ProviderSummerCard";
 
-const UserDetails = () => {
+const BookingSummary = () => {
 
     return (
         <>
-            <Box pt={6} pl={{xs: 0, md: 4}}>
+        <Box pt={6} pl={{xs: 0, md: 4}}>
         <Box display={'flex'} alignItems={{xs:'center', md: 'start'}} flexDirection={'column'}>
-            <Typography
-          variant="body1"
-          sx={{
-            fontFamily: "sans-serif",
-            fontWeight: 700,
-            color: "#B89072",
-            textDecoration: "none",
-          }}
-        >
-          STEP 4 OF 4
-        </Typography>
         <Typography
           sx={{
             typography: { xs: 'h5', md: 'h3'},
@@ -29,11 +18,11 @@ const UserDetails = () => {
             textDecoration: "none",
           }}
         >
-          Enter your details
+          Booking Summary
         </Typography>
         </Box>
         <Box>
-            <BookingDetailsForm />
+            <ProviderSummaryCard />
         </Box>
         <Box px={1.6}>
             <StepperControls previousURL="/date"  nextURL="/booking" />
@@ -41,6 +30,7 @@ const UserDetails = () => {
         </Box>
         </>
     )
+
 }
 
-export default UserDetails;
+export default BookingSummary;
