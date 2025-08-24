@@ -1,8 +1,28 @@
 import { Box, Typography } from "@mui/material";
 import { StepperControls } from "../common/StepperControls";
 import ServiceAccordionList from "../components/ServiceList";
+import { useEffect, useState } from "react";
+import { getSerivcesByCenterId } from "../api/zenoti-api/services/zenotiService";
 
 const TreatmentServices = () => {
+  const [treatment, setTreatment] = useState<object[] | null>(null);
+
+  const getTreatmentData = async () => {
+    try 
+    {
+      const data = await getSerivcesByCenterId("568fdbef-f527-40f9-a428-34a57383dab4");
+      console.log(data);
+    } catch (error) {
+      console.error("Error fetching treatment data:", error);
+    }
+  }
+
+  useEffect(() => {
+    getTreatmentData();
+
+    return () => { setTreatment(null); };
+  },[])
+  
   return (
     <>
       <Box pt={6} pl={{xs: 0, md: 4}}>

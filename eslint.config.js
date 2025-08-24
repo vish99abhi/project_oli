@@ -9,6 +9,14 @@ export default tseslint.config([
   globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],
+    rules:{
+     ' @typescript-eslint/no-explicit-any': 'off',
+     ' @typescript-eslint/ban-ts-comment': 'off',
+     ' @typescript-eslint/no-non-null-assertion': 'off',
+     ' @typescript-eslint/no-unused-vars': 'warn',
+     ' react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',  
+    },
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,

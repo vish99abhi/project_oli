@@ -10,7 +10,9 @@ import { useLocation } from "react-router-dom";
 
 function AppHeader() {
   const { pathname } = useLocation();
-  const isHide = pathname === '/booking'
+  // const isHide = pathname === '/booking'
+  const pathsToHide = ['/confirmation', '/booking'];
+  const isHide = () => pathsToHide.includes(pathname);
   return (
     <AppBar position="static" sx={{ backgroundColor: "whitesmoke", boxShadow: "none" }}>
       <Container maxWidth="xl">
@@ -67,7 +69,7 @@ function AppHeader() {
               maxWidth: "50vw",
             }}
           >
-            <Box sx={{ width: "100%", visibility: isHide ? "hidden" : null }}>
+            <Box sx={{ width: "100%", visibility: isHide() ? "hidden" : null }}>
               <Steppers />
             </Box>
           </Box>

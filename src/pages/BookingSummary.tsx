@@ -25,7 +25,7 @@ const BookingSummary = () => {
             <ProviderSummaryCard />
         </Box>
         <Box px={1.6}>
-            <StepperControls previousURL="/date"  nextURL="/booking" />
+            <StepperControls previousURL="/date"  nextURL="/confirmation" />
         </Box>
         </Box>
         </>
