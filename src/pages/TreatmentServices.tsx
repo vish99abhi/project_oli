@@ -1,61 +1,109 @@
-import { Box, Typography } from "@mui/material";
-import { StepperControls } from "../common/StepperControls";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import ServiceAccordionList from "../components/ServiceList";
 import { useEffect, useState } from "react";
-import { getSerivcesByCenterId } from "../api/zenoti-api/services/zenotiService";
+import {
+  getCategoriesByCenterId,
+  getSerivcesByCenterId,
+} from "../api/zenoti-api/services/zenotiService";
+import { useStepper } from "../store/StepperContext";
+import { useNavigate } from "react-router-dom";
 
 const TreatmentServices = () => {
-  const [treatment, setTreatment] = useState<object[] | null>(null);
+  const { goBack, goNext } = useStepper();
+  const [treatmentData, setTreatmentData] = useState<object[] | null>(null);
+  const navigate = useNavigate();
 
-  const getTreatmentData = async () => {
-    try 
-    {
-      const data = await getSerivcesByCenterId("568fdbef-f527-40f9-a428-34a57383dab4");
-      console.log(data);
+  const handleBackStep = () => {
+    goBack();
+    navigate("/");
+  };
+  const handleNextStep = () => {
+    goNext();
+    navigate("/date");
+  };
+
+  const fetchAllCategories = async () => {
+    try {
+      const response = await getCategoriesByCenterId(
+        "bea93d09-9abf-4ab4-b428-8f5246720654"
+      );
+      const categories = response.categories;
+      setTreatmentData(categories);
+      console.log("Fetched categories:", response);
     } catch (error) {
-      console.error("Error fetching treatment data:", error);
+      console.error("Error fetching categories:", error);
     }
-  }
+  };
 
   useEffect(() => {
-    getTreatmentData();
+    fetchAllCategories();
 
-    return () => { setTreatment(null); };
-  },[])
-  
+    return () => {
+      setTreatmentData(null);
+    };
+  }, []);
+
   return (
     <>
-      <Box pt={6} pl={{xs: 0, md: 4}}>
-        <Box display={'flex'} alignItems={{xs:'center', md: 'start'}} flexDirection={'column'}>
-            <Typography
-          variant="body1"
-          sx={{
-            fontFamily: "sans-serif",
-            fontWeight: 700,
-            color: "#B89072",
-            textDecoration: "none",
-          }}
+      <Box pt={6} pl={{ xs: 0, md: 4 }}>
+        <Box
+          display={"flex"}
+          alignItems={{ xs: "center", md: "start" }}
+          flexDirection={"column"}
         >
-          STEP 2 OF 4
-        </Typography>
-        <Typography
-          sx={{
-            typography: { xs: 'h5', md: 'h3'},
-            mr: 2,
-            fontFamily: "serif !important",
-            fontWeight: 'bold !important',
-            color: "black",
-            textDecoration: "none",
-          }}
-        >
-          Choose your treatment
-        </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              fontFamily: "sans-serif",
+              fontWeight: 700,
+              color: "#B89072",
+              textDecoration: "none",
+            }}
+          >
+            STEP 2 OF 4
+          </Typography>
+          <Typography
+            sx={{
+              typography: { xs: "h5", md: "h3" },
+              mr: 2,
+              fontFamily: "serif !important",
+              fontWeight: "bold !important",
+              color: "black",
+              textDecoration: "none",
+            }}
+          >
+            Choose your treatment
+          </Typography>
         </Box>
         <Box>
-         <ServiceAccordionList />
+          <ServiceAccordionList categories={treatmentData} />
         </Box>
-        <Box px={1.6}>
-            <StepperControls previousURL="/" nextURL="/date" />
+        <Box>
+          <Stack direction="row" spacing={1}>
+            <Button
+              onClick={handleBackStep}
+              sx={{
+                textTransform: "none",
+                color: "black",
+                display: { xs: "none", md: "block" },
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="contained"
+              disableElevation
+              onClick={handleNextStep}
+              size="large"
+              sx={{
+                textTransform: "none",
+                backgroundColor: "Black",
+                width: { xs: "100%", md: "auto" },
+              }}
+            >
+              Next
+            </Button>
+          </Stack>
         </Box>
       </Box>
     </>

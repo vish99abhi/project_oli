@@ -1,35 +1,54 @@
 import {
   Box,
   Button,
-  InputAdornment,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useUserDetails } from "../store/UserContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStepper } from "../store/StepperContext";
 import { useJsApiLoader } from "@react-google-maps/api";
-import AddressSearchBox from "../components/AddressSearchBox";
 import PlacesAutocomplete from "../components/PlacesAutoComplete";
+import { Centers, type Center } from "../data/Centers";
 
+const libraries: "places"[] = ["places"];
 
-const libraries: ("places")[] = ["places"];
+function extractZipCode(address: string): string | null {
+  const match = address.match(/\b\d{5}\b/);
+  return match ? match[0] : null;
+}
+
+function getCentersByZip(zip: string): Center[] {
+  if (!zip) return [];
+  return Centers.filter((center) => center.zipCodes.includes(zip));
+}
+
 const Location = () => {
   // const BORDER = "#8B4513";
   // const BORDER_HOVER = "#6E3610";
   // const BORDER_FOCUS = "#B89072";
+  const GREEN_BORDER = "#4CAF50";
+  const RED_TEXT = "#D32F2F";
   const { setUserDetails } = useUserDetails();
   const { goNext } = useStepper();
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState<any>("");
   const navigate = useNavigate();
+  const [input, setInput] = useState<any>("");
 
+  console.log(extractZipCode(input), "zip code");
+  console.log(getCentersByZip(extractZipCode(input) || ""), "centers");
+  const zip = extractZipCode(input);
+  const matchingCenters = getCentersByZip(zip || "");
+  console.log(matchingCenters, "matching centers");
 
-   const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: 'AIzaSyDP6ueoK8vJD2KTAsIxETW07TRHyf0Ar_I',
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: "AIzaSyDP6ueoK8vJD2KTAsIxETW07TRHyf0Ar_I",
     libraries,
   });
 
@@ -41,6 +60,10 @@ const Location = () => {
     goNext();
     navigate("/service");
   };
+
+  useEffect(() => {
+    // fetchAllCategories();
+  }, []);
 
   if (!isLoaded) return <div>Loading...</div>;
 
@@ -76,7 +99,49 @@ const Location = () => {
         </Typography>
       </Box>
       <Box width={{ sx: 250, md: 650 }} py={4}>
-        { <PlacesAutocomplete />}
+        <PlacesAutocomplete input={input} setInput={setInput} />
+      </Box>
+      <Box px={{ xs: 2.5, md: 0 }} mb={4} width={{ sx: 250, md: 600 }}>
+        {/* Center List UI */}
+        {zip && (
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              mb: 2,
+              border: `2px solid ${
+                matchingCenters.length > 0 ? GREEN_BORDER : RED_TEXT
+              }`,
+              background: matchingCenters.length > 0 ? "#F7FFF7" : "#FFF7F7",
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight={700} mb={1}>
+              Centers serving zip code {zip}:
+            </Typography>
+            {matchingCenters.length > 0 ? (
+              <List dense>
+                {matchingCenters.map((center, idx) => (
+                  <ListItem key={center.provider_id}>
+                    <ListItemText
+                      primary={
+                        <span>
+                          <b>{idx + 1}.</b> {center.name}
+                        </span>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{ color: RED_TEXT, fontWeight: 600 }}
+              >
+                No centers found for this zip code.
+              </Typography>
+            )}
+          </Paper>
+        )}
       </Box>
       <Box>
         <Stack direction="row" spacing={1}>

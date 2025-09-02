@@ -9,6 +9,8 @@ type UserDetailsType = {
 };
 
 type UserContextType = {
+  guestDetails: any;
+  setGuestDetails: React.Dispatch<React.SetStateAction<any>>;
   userDetails: UserDetailsType;
   setBookingDetails: (details: Object[]) => void;
   bookingDetails: Object[];
@@ -26,11 +28,19 @@ export const useUserDetails = () => {
 };
 
 function UserContextProvider({ children }: { children: React.ReactNode }) {
-  const [userDetails, setUserDetails] = useState<UserDetailsType>({});
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [guestDetails, setGuestDetails] = useState<any>(null);
   const [bookingDetails, setBookingDetails] = useState<Object[]>([]);
   return (
     <UserDetails.Provider
-      value={{ setUserDetails, userDetails, bookingDetails, setBookingDetails }}
+      value={{
+        guestDetails,
+        setGuestDetails,
+        setUserDetails,
+        userDetails,
+        bookingDetails,
+        setBookingDetails,
+      }}
     >
       {children}
     </UserDetails.Provider>

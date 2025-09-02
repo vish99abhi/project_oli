@@ -1,15 +1,16 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
-import { StepperControls } from "../common/StepperControls";
 import BookingDetailsForm from "../components/BookingDetailsForm";
 import { useUserDetails } from "../store/UserContext";
 import { useNavigate } from "react-router-dom";
 import { useStepper } from "../store/StepperContext";
 import { useState } from "react";
+import { guestUserCreation } from "../api/zenoti-api/services/zenotiService";
 
 const UserDetails = () => {
   const navigate = useNavigate();
   const { goNext, goBack } = useStepper();
-  const { setUserDetails } = useUserDetails();
+  const { setUserDetails, setGuestDetails } = useUserDetails();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -33,6 +34,31 @@ const UserDetails = () => {
   const handleBlur = (field: keyof typeof values) => () => {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
+
+  const createGuestUser = async () => {
+    let payload = {
+      center_id: "bea93d09-9abf-4ab4-b428-8f5246720654",
+      personal_info: {
+        first_name: values.name,
+        last_name: values.name,
+        email: values.email,
+        mobile_phone: {
+          country_code: 95,
+          phone_code: " +1",
+          number: values.phone,
+        },
+      },
+    };
+    console.log("Creating guest user with payload:", payload);
+    try {
+      const response = await guestUserCreation(payload);
+      console.log("Guest user created:", response);
+      setGuestDetails(response);
+    } catch (error) {
+      console.log("Error creating guest user:", error);
+    }
+  };
+
   const handleNextStep = () => {
     console.log(values);
     setUserDetails((prevUserDetails) => ({
@@ -43,6 +69,7 @@ const UserDetails = () => {
       saveInfo: values.save,
     }));
     goNext();
+    createGuestUser();
     navigate("/booking");
   };
 
@@ -53,8 +80,10 @@ const UserDetails = () => {
 
   // Basic validation
   const validateName = (name: string) => name.trim().length > 0;
-  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validatePhone = (phone: string) => /^\d{10,}$/.test(phone.replace(/\D/g, ''));
+  const validateEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validatePhone = (phone: string) =>
+    /^\d{10,}$/.test(phone.replace(/\D/g, ""));
 
   const nameError = touched.name && !validateName(values.name);
   const emailError = touched.email && !validateEmail(values.email);
