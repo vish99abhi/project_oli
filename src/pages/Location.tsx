@@ -120,7 +120,6 @@ const Location: React.FC = () => {
 
       goNext();
       navigate("/service", {
-        replace: true,
         state: { centerId: selectedCenterId, fromPage: "location" },
       });
     } catch (error) {

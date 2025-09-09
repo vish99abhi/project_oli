@@ -3,19 +3,15 @@ import ServiceAccordionList from "../components/ServiceList";
 import { useEffect, useState } from "react";
 import { getCategoriesByCenterId } from "../api/zenoti-api/services/zenotiService";
 import { useStepper } from "../store/StepperContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useUserDetails } from "../store/UserContext";
 
 const TreatmentServices = () => {
   const { goBack, goNext } = useStepper();
-  const { selectedServices, setSelectedServices } = useUserDetails();
+  const { selectedServices, setSelectedServices, centerDetails } =
+    useUserDetails();
   const [treatmentData, setTreatmentData] = useState<object[] | null>(null);
   const navigate = useNavigate();
-
-  const { centerId } = useLocation().state as {
-    centerId: string;
-    fromPage: string;
-  };
 
   console.log("Selected Services in TreatmentServices:", selectedServices);
 
@@ -40,11 +36,11 @@ const TreatmentServices = () => {
   };
 
   useEffect(() => {
-    fetchAllCategories(centerId);
+    fetchAllCategories(centerDetails?.provider_id);
     return () => {
       setTreatmentData(null);
     };
-  }, [centerId]);
+  }, [centerDetails?.provider_id, centerDetails]);
 
   return (
     <>
@@ -81,7 +77,7 @@ const TreatmentServices = () => {
         <Box>
           <ServiceAccordionList
             categories={treatmentData}
-            center_id={centerId}
+            center_id={centerDetails?.provider_id}
             setSelectedServices={setSelectedServices}
           />
         </Box>
