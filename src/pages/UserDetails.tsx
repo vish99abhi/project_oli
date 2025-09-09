@@ -4,17 +4,27 @@ import { useUserDetails } from "../store/UserContext";
 import { useNavigate } from "react-router-dom";
 import { useStepper } from "../store/StepperContext";
 import { useState } from "react";
-import { guestUserCreation } from "../api/zenoti-api/services/zenotiService";
+import {
+  guestUserCreation,
+  updateGuestDetails,
+} from "../api/zenoti-api/services/zenotiService";
 
 const UserDetails = () => {
   const navigate = useNavigate();
   const { goNext, goBack } = useStepper();
-  const { setUserDetails, setGuestDetails } = useUserDetails();
+  const { setUserDetails, setGuestDetails, guestDetails, userDetails } =
+    useUserDetails();
+
+  console.log("Guest Details from context:", guestDetails);
+  console.log("User Details from context:", userDetails);
+  const { center_id, personal_info } = guestDetails;
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [values, setValues] = useState({
-    name: "",
-    email: "",
-    phone: "",
+    name:
+      guestDetails?.personal_info?.first_name + " " + personal_info.last_name ||
+      "",
+    email: guestDetails?.personal_info?.email || "",
+    phone: guestDetails?.personal_info?.mobile_phone?.phone || "",
     save: false,
   });
 
@@ -35,23 +45,32 @@ const UserDetails = () => {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
+  console.log("Values:", values);
+
   const createGuestUser = async () => {
     let payload = {
-      center_id: "bea93d09-9abf-4ab4-b428-8f5246720654",
+      id: guestDetails.user_id,
+      code: "",
+      center_id: center_id,
+      preferred_service_id: "",
+      center_name: "",
       personal_info: {
+        user_name: "",
         first_name: values.name,
-        last_name: values.name,
+        last_name: "last name",
+        middle_name: "",
+        preferred_name: "",
         email: values.email,
         mobile_phone: {
           country_code: 95,
-          phone_code: " +1",
+          phone_code: 0,
           number: values.phone,
         },
       },
     };
     console.log("Creating guest user with payload:", payload);
     try {
-      const response = await guestUserCreation(payload);
+      const response = await updateGuestDetails(guestDetails.user_id, payload);
       console.log("Guest user created:", response);
       setGuestDetails(response);
     } catch (error) {

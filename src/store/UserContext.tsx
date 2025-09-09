@@ -13,8 +13,14 @@ type UserContextType = {
   setGuestDetails: React.Dispatch<React.SetStateAction<any>>;
   userDetails: UserDetailsType;
   setBookingDetails: (details: Object[]) => void;
-  bookingDetails: Object[];
+  bookingDetails: any;
   setUserDetails: React.Dispatch<React.SetStateAction<UserDetailsType>>;
+  setSelectedServices: React.Dispatch<React.SetStateAction<any>>;
+  selectedServices: any[];
+  centerDetails: any;
+  setCenterDetails: React.Dispatch<React.SetStateAction<any>>;
+  setSlotTime: React.Dispatch<React.SetStateAction<any>>;
+  soltTime: any;
 };
 
 const UserDetails = createContext<UserContextType | undefined>(undefined);
@@ -30,7 +36,11 @@ export const useUserDetails = () => {
 function UserContextProvider({ children }: { children: React.ReactNode }) {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [guestDetails, setGuestDetails] = useState<any>(null);
-  const [bookingDetails, setBookingDetails] = useState<Object[]>([]);
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
+  const [centerDetails, setCenterDetails] = useState<any>(null);
+  const [selectedServices, setSelectedServices] = useState<any>([]);
+  const [soltTime, setSlotTime] = useState<any>(null);
+
   return (
     <UserDetails.Provider
       value={{
@@ -40,6 +50,12 @@ function UserContextProvider({ children }: { children: React.ReactNode }) {
         userDetails,
         bookingDetails,
         setBookingDetails,
+        setSelectedServices,
+        selectedServices,
+        centerDetails,
+        setCenterDetails,
+        soltTime,
+        setSlotTime,
       }}
     >
       {children}

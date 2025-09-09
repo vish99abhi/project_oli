@@ -1,10 +1,12 @@
 import axios, { type AxiosInstance } from "axios";
 
+
+const API_KEY = import.meta.env.OLI_APP_ZENOTI_API_Key;
 const zenoti: AxiosInstance = axios.create({
   baseURL: "https://api.zenoti.com/v1/",
   headers: {
     "Content-Type": "application/json",
-    "Authorization": `apikey ${'6a67119017324d688ae29d1071fa0f5b8700a587aa784d1f87c6fc035c3d77b8'}`,
+    "Authorization": `apikey ${API_KEY}`,
   },
 });
 

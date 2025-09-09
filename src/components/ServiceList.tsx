@@ -7,15 +7,12 @@ import {
   Typography,
   Stack,
   Divider,
-  Radio,
-  RadioGroup,
   FormControlLabel,
   Checkbox,
   Skeleton,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import { getSerivcesByCenterId } from "../api/zenoti-api/services/zenotiService";
@@ -53,14 +50,25 @@ const TEXT_MUTED = "#6C757D";
 
 // Memoized ServiceRow to prevent unnecessary re-renders
 const ServiceRow = memo(
-  ({ service, checked }: { service: any; checked: boolean }) => {
+  ({
+    service,
+    checked,
+    onServiceToggle,
+  }: {
+    service: any;
+    checked: boolean;
+    onServiceToggle: () => void;
+  }) => {
     console.log(service, "service in row");
     return (
       <FormControlLabel
-        value={service.id}
         control={
-          <Radio
-            icon={<RadioButtonUncheckedIcon sx={{ color: BROWN }} />}
+          <Checkbox
+            checked={checked}
+            onChange={onServiceToggle}
+            icon={
+              <CheckCircleOutlineIcon sx={{ color: BROWN, opacity: 0.5 }} />
+            }
             checkedIcon={<CheckCircleIcon sx={{ color: BROWN }} />}
             sx={{ p: 1.5 }}
           />
@@ -183,6 +191,7 @@ const AddOnRow = memo(
 const AddOnBlock = memo(
   ({
     parentName,
+    serviceId,
     items,
     selectedIds,
     onToggle,
@@ -234,32 +243,30 @@ const SkeletonLoader = memo(() => (
 const ServiceList = memo(
   ({
     services,
-    categoryId,
-    selectedServiceId,
-    onSelectService,
+    selectedServiceIds,
+    onToggleService,
     selectedAddOnsByService,
     toggleAddOn,
   }: {
     services: any[];
-    categoryId: string;
-    selectedServiceId: string | null;
-    onSelectService: (event: any, value: string) => void;
+    selectedServiceIds: Set<string>;
+    onToggleService: (serviceId: string) => void;
     selectedAddOnsByService: Record<string, Set<string>>;
     toggleAddOn: (serviceId: string, addOnId: string) => void;
   }) => {
     return (
-      <RadioGroup
-        value={selectedServiceId ?? ""}
-        onChange={onSelectService}
-        sx={{ width: "100%" }}
-      >
+      <Box sx={{ width: "100%" }}>
         {services.map((svc, idx) => {
-          const checked = selectedServiceId === svc.id;
+          const checked = selectedServiceIds.has(svc.id);
           const showAddOns = checked && svc.addOns && svc.addOns.length > 0;
 
           return (
             <React.Fragment key={svc.id}>
-              <ServiceRow service={svc} checked={checked} />
+              <ServiceRow
+                service={svc}
+                checked={checked}
+                onServiceToggle={() => onToggleService(svc.id)}
+              />
 
               {showAddOns && (
                 <>
@@ -282,7 +289,7 @@ const ServiceList = memo(
             </React.Fragment>
           );
         })}
-      </RadioGroup>
+      </Box>
     );
   }
 );
@@ -293,18 +300,18 @@ const AccordionItem = memo(
     category,
     expanded,
     services,
-    selectedServiceId,
+    selectedServiceIds,
     onExpand,
-    onSelectService,
+    onToggleService,
     selectedAddOnsByService,
     toggleAddOn,
   }: {
     category: any;
     expanded: boolean;
     services: any[] | undefined;
-    selectedServiceId: string | null;
+    selectedServiceIds: Set<string>;
     onExpand: (event: React.SyntheticEvent, isExpanded: boolean) => void;
-    onSelectService: (event: any, value: string) => void;
+    onToggleService: (serviceId: string) => void;
     selectedAddOnsByService: Record<string, Set<string>>;
     toggleAddOn: (serviceId: string, addOnId: string) => void;
   }) => {
@@ -346,9 +353,8 @@ const AccordionItem = memo(
           ) : (
             <ServiceList
               services={services}
-              categoryId={category.id}
-              selectedServiceId={selectedServiceId}
-              onSelectService={onSelectService}
+              selectedServiceIds={selectedServiceIds}
+              onToggleService={onToggleService}
               selectedAddOnsByService={selectedAddOnsByService}
               toggleAddOn={toggleAddOn}
             />
@@ -361,37 +367,55 @@ const AccordionItem = memo(
 
 // ====== Main optimized component ======
 export default function ServiceAccordionList({
+  center_id,
   categories,
+  setSelectedServices,
 }: {
+  center_id: string;
   categories: any;
+  setSelectedServices: (services: any) => void;
 }) {
   // State management
   const [expanded, setExpanded] = useState<string | false>("");
   const [servicesByCategory, setServicesByCategory] = useState<
     Record<string, any[]>
   >({});
-  const [selectedServiceByCategory, setSelectedServiceByCategory] = useState<
-    Record<string, string | null>
-  >({
-    tox: "botox",
-  });
+
+  // Changed to Set for multiple service selections per category
+  const [selectedServicesByCategory, setSelectedServicesByCategory] = useState<
+    Record<string, Set<string>>
+  >({});
+
   const [selectedAddOnsByService, setSelectedAddOnsByService] = useState<
     Record<string, Set<string>>
-  >({
-    botox: new Set(["chem-peel"]),
-  });
+  >({});
 
-  // Memoized callbacks
-  const handleSelectService = useCallback(
+  console.log(selectedServicesByCategory, "selectedServicesByCategory");
+
+  // Handle service toggle (now supports multiple selections)
+  const handleToggleService = useCallback(
     (categoryId: string, serviceId: string) => {
-      setSelectedServiceByCategory((prev) => ({
-        ...prev,
-        [categoryId]: serviceId,
-      }));
-      setSelectedAddOnsByService((prev) => {
-        const next = { ...prev };
-        if (!next[serviceId]) next[serviceId] = new Set();
-        return next;
+      console.log({ categoryId, serviceId }, "toggling service");
+
+      setSelectedServicesByCategory((prev) => {
+        const currentSelected = new Set(prev[categoryId] ?? []);
+
+        if (currentSelected.has(serviceId)) {
+          // Remove service and its add-ons
+          currentSelected.delete(serviceId);
+          setSelectedAddOnsByService((prevAddOns) => {
+            const { [serviceId]: removed, ...rest } = prevAddOns;
+            return rest;
+          });
+        } else {
+          // Add service
+          currentSelected.add(serviceId);
+        }
+
+        return {
+          ...prev,
+          [categoryId]: currentSelected,
+        };
       });
     },
     []
@@ -407,16 +431,13 @@ export default function ServiceAccordionList({
   }, []);
 
   const fetchServices = useCallback(
-    async (categoryId: string) => {
+    async (center_id: string, categoryId: string) => {
       if (servicesByCategory[categoryId]) return;
 
       try {
-        const response = await getSerivcesByCenterId(
-          "bea93d09-9abf-4ab4-b428-8f5246720654",
-          {
-            category_id: categoryId,
-          }
-        );
+        const response = await getSerivcesByCenterId(center_id, {
+          category_id: categoryId,
+        });
         console.log("Fetched services:", response);
         setServicesByCategory((prev) => ({
           ...prev,
@@ -434,38 +455,135 @@ export default function ServiceAccordionList({
   );
 
   const handleExpand = useCallback(
-    (panel: string) => (_e: React.SyntheticEvent, isExpanded: boolean) => {
-      console.log("Expanding panel:", panel, isExpanded);
-      if (isExpanded) {
-        fetchServices(panel);
-      }
-      setExpanded(isExpanded ? panel : false);
-    },
+    (center_id: string, panel: string) =>
+      (_e: React.SyntheticEvent, isExpanded: boolean) => {
+        console.log("Expanding panel:", panel, isExpanded);
+        if (isExpanded) {
+          fetchServices(center_id, panel);
+        }
+        setExpanded(isExpanded ? panel : false);
+      },
     [fetchServices]
   );
 
-  // Memoized selection payload
+  // **Enhanced selection object with complete service and add-on data**
   const getSelectionPayload = useMemo(() => {
-    return Object.entries(selectedServiceByCategory).map(
-      ([categoryId, svcId]) => ({
-        categoryId,
-        serviceId: svcId,
-        addOnIds: svcId ? Array.from(selectedAddOnsByService[svcId] ?? []) : [],
-      })
-    );
-  }, [selectedServiceByCategory, selectedAddOnsByService]);
+    const result: Array<{
+      categoryId: string;
+      categoryName?: string;
+      services: Array<{
+        serviceId: string;
+        serviceData: any;
+        selectedAddOns: Array<{
+          addOnId: string;
+          addOnData: any;
+        }>;
+      }>;
+    }> = [];
 
-  console.log(servicesByCategory, "services by category");
+    Object.entries(selectedServicesByCategory).forEach(
+      ([categoryId, serviceIds]) => {
+        if (serviceIds.size === 0) return;
+
+        const categoryServices = servicesByCategory[categoryId] || [];
+        const category = categories?.find((cat: any) => cat.id === categoryId);
+
+        const servicesData = Array.from(serviceIds)
+          .map((serviceId) => {
+            const serviceData = categoryServices.find(
+              (svc) => svc.id === serviceId
+            );
+            const selectedAddOnIds =
+              selectedAddOnsByService[serviceId] ?? new Set();
+
+            const selectedAddOns = Array.from(selectedAddOnIds)
+              .map((addOnId) => {
+                const addOnData = serviceData?.addOns?.find(
+                  (addon: any) => addon.id === addOnId
+                );
+                return {
+                  addOnId,
+                  addOnData,
+                };
+              })
+              .filter((addon) => addon.addOnData); // Filter out any undefined add-ons
+
+            return {
+              serviceId,
+              serviceData,
+              selectedAddOns,
+            };
+          })
+          .filter((service) => service.serviceData); // Filter out any undefined services
+
+        if (servicesData.length > 0) {
+          result.push({
+            categoryId,
+            categoryName: category?.name,
+            services: servicesData,
+          });
+        }
+      }
+    );
+
+    setSelectedServices(result); // Update parent component with the selection
+    return result;
+  }, [
+    selectedServicesByCategory,
+    selectedAddOnsByService,
+    servicesByCategory,
+    categories,
+  ]);
+
+  // Log the complete selection object for debugging
+  console.log("Complete Selection Object:", getSelectionPayload);
 
   return (
     <Box sx={{ p: 2 }}>
+      {/* Display selection summary */}
+      {getSelectionPayload.length > 0 && (
+        <Box
+          sx={{
+            mb: 2,
+            p: 2,
+            bgcolor: "rgba(185,144,114,0.08)",
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1, color: BROWN }}>
+            Selected Services Summary:
+          </Typography>
+          {getSelectionPayload.map((category) => (
+            <Box key={category.categoryId} sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {category.categoryName}: {category.services.length} service(s)
+              </Typography>
+              {category.services.map((service) => (
+                <Typography
+                  key={service.serviceId}
+                  variant="body2"
+                  sx={{ ml: 2, color: TEXT_MUTED }}
+                >
+                  • {service.serviceData?.name}
+                  {service.selectedAddOns.length > 0 &&
+                    ` (+${service.selectedAddOns.length} add-on${
+                      service.selectedAddOns.length > 1 ? "s" : ""
+                    })`}
+                </Typography>
+              ))}
+            </Box>
+          ))}
+        </Box>
+      )}
+
       {categories?.map((cat: any) => {
         const services = servicesByCategory[cat.id];
-        const selectedServiceId = selectedServiceByCategory[cat.id] ?? null;
+        const selectedServiceIds =
+          selectedServicesByCategory[cat.id] ?? new Set<string>();
         const isExpanded = expanded === cat.id;
 
-        const onSelectService = (event: any, value: string) => {
-          handleSelectService(cat.id, value);
+        const onToggleService = (serviceId: string) => {
+          handleToggleService(cat.id, serviceId);
         };
 
         return (
@@ -474,9 +592,9 @@ export default function ServiceAccordionList({
             category={cat}
             expanded={isExpanded}
             services={services}
-            selectedServiceId={selectedServiceId}
-            onExpand={handleExpand(cat.id)}
-            onSelectService={onSelectService}
+            selectedServiceIds={selectedServiceIds}
+            onExpand={handleExpand(center_id, cat.id)}
+            onToggleService={onToggleService}
             selectedAddOnsByService={selectedAddOnsByService}
             toggleAddOn={toggleAddOn}
           />

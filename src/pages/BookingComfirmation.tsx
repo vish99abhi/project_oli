@@ -5,6 +5,7 @@ import Link from "@mui/material/Link";
 import DoneIcon from "@mui/icons-material/Done";
 import { useTheme } from "@mui/material/styles";
 import { useMediaQuery } from "@mui/material";
+import { useUserDetails } from "../store/UserContext";
 
 const BORDER = "#E6DFD8";
 const BROWN = "#B89072";
@@ -23,6 +24,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { centerDetails } = useUserDetails();
   return (
     <Box pt={4} px={{ xs: 4, md: 4 }}>
       <Box
@@ -70,7 +72,9 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
           fontWeight={550}
           sx={{ fontFamily: "sans-serif", mb: -2 }}
         >
-          Your appointment with {providerName} is confirmed.
+          Your appointment with{" "}
+          {centerDetails?.name ? centerDetails.name : providerName} is
+          confirmed.
         </Typography>
         <Typography
           variant="body2"

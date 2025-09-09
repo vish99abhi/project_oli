@@ -51,3 +51,53 @@ export const guestUserCreation = async (payload: any) => {
     throw error;
   } 
 }
+
+export const updateGuestDetails = async (guestId: string, payload: any) => {
+  try {
+    const response = await zenoti.put(`/guests/${guestId}`, payload); 
+    return response.data;
+  } catch (error) {
+    console.error("Error updating guest user:", error);
+    throw error;
+  } 
+}
+
+
+export const createBooking = async (payload: any) => {
+  try {
+    const response = await zenoti.post(`/bookings?is_double_booking_enabled=true`, payload); 
+    return response.data;
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    throw error;
+  }
+}
+
+export const getAvailableSlots = async (bookingId: string) => {
+  try {
+    const response = await zenoti.get(`/bookings/${bookingId}/slots`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching available slots:", error);
+    throw error;
+  }
+}
+
+export const reservedSoltsBooking = async (bookingId: string, payload: any) => {
+   try {
+    const response = await zenoti.post(`/bookings/${bookingId}/slots/reserve`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching available slots:", error);
+    throw error;
+  }
+}
+
+export const confirmBooking = async (bookingId: string) => {
+  try {
+    const response = await zenoti.post(`/bookings/${bookingId}/slots/confirm`)
+    return response.data
+  } catch (error) {
+    throw error;
+  }
+}

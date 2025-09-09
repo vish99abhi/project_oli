@@ -1,17 +1,23 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import ServiceAccordionList from "../components/ServiceList";
 import { useEffect, useState } from "react";
-import {
-  getCategoriesByCenterId,
-  getSerivcesByCenterId,
-} from "../api/zenoti-api/services/zenotiService";
+import { getCategoriesByCenterId } from "../api/zenoti-api/services/zenotiService";
 import { useStepper } from "../store/StepperContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useUserDetails } from "../store/UserContext";
 
 const TreatmentServices = () => {
   const { goBack, goNext } = useStepper();
+  const { selectedServices, setSelectedServices } = useUserDetails();
   const [treatmentData, setTreatmentData] = useState<object[] | null>(null);
   const navigate = useNavigate();
+
+  const { centerId } = useLocation().state as {
+    centerId: string;
+    fromPage: string;
+  };
+
+  console.log("Selected Services in TreatmentServices:", selectedServices);
 
   const handleBackStep = () => {
     goBack();
@@ -22,11 +28,9 @@ const TreatmentServices = () => {
     navigate("/date");
   };
 
-  const fetchAllCategories = async () => {
+  const fetchAllCategories = async (center_id: string) => {
     try {
-      const response = await getCategoriesByCenterId(
-        "bea93d09-9abf-4ab4-b428-8f5246720654"
-      );
+      const response = await getCategoriesByCenterId(center_id);
       const categories = response.categories;
       setTreatmentData(categories);
       console.log("Fetched categories:", response);
@@ -36,12 +40,11 @@ const TreatmentServices = () => {
   };
 
   useEffect(() => {
-    fetchAllCategories();
-
+    fetchAllCategories(centerId);
     return () => {
       setTreatmentData(null);
     };
-  }, []);
+  }, [centerId]);
 
   return (
     <>
@@ -76,7 +79,11 @@ const TreatmentServices = () => {
           </Typography>
         </Box>
         <Box>
-          <ServiceAccordionList categories={treatmentData} />
+          <ServiceAccordionList
+            categories={treatmentData}
+            center_id={centerId}
+            setSelectedServices={setSelectedServices}
+          />
         </Box>
         <Box>
           <Stack direction="row" spacing={1}>

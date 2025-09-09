@@ -1,23 +1,30 @@
+import React, { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useJsApiLoader } from "@react-google-maps/api";
 import {
   Box,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Stack,
   Typography,
+  Paper,
+  FormControl,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Button,
+  Stack,
 } from "@mui/material";
-import { useUserDetails } from "../store/UserContext";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useStepper } from "../store/StepperContext";
-import { useJsApiLoader } from "@react-google-maps/api";
 import PlacesAutocomplete from "../components/PlacesAutoComplete";
 import { Centers, type Center } from "../data/Centers";
+import { guestUserCreation } from "../api/zenoti-api/services/zenotiService";
+import { useUserDetails } from "../store/UserContext";
+import { useStepper } from "../store/StepperContext";
 
+// Constants moved outside component to prevent recreation
+const BORDER = "#8B4513";
+const RED_TEXT = "#D32F2F";
+const GOOGLE_MAPS_API_KEY = import.meta.env.OLI_APP_Google_API_Key || "";
 const libraries: "places"[] = ["places"];
 
+// Utility functions moved outside component
 function extractZipCode(address: string): string | null {
   const match = address.match(/\b\d{5}\b/);
   return match ? match[0] : null;
@@ -28,51 +35,126 @@ function getCentersByZip(zip: string): Center[] {
   return Centers.filter((center) => center.zipCodes.includes(zip));
 }
 
-const Location = () => {
-  // const BORDER = "#8B4513";
-  // const BORDER_HOVER = "#6E3610";
-  // const BORDER_FOCUS = "#B89072";
-  const GREEN_BORDER = "#4CAF50";
-  const RED_TEXT = "#D32F2F";
-  const { setUserDetails } = useUserDetails();
-  const { goNext } = useStepper();
-  const [address, setAddress] = useState<any>("");
-  const navigate = useNavigate();
-  const [input, setInput] = useState<any>("");
+const generateTenDigitRandomNumber = (): number =>
+  Math.floor(Math.random() * 9000000000) + 1000000000;
 
-  console.log(extractZipCode(input), "zip code");
-  console.log(getCentersByZip(extractZipCode(input) || ""), "centers");
-  const zip = extractZipCode(input);
-  const matchingCenters = getCentersByZip(zip || "");
-  console.log(matchingCenters, "matching centers");
+const Location: React.FC = () => {
+  const {
+    setUserDetails,
+    setGuestDetails,
+    setCenterDetails,
+    userDetails,
+    centerDetails,
+  } = useUserDetails();
+  const { goNext } = useStepper();
+  const navigate = useNavigate();
+
+  // Consolidated and properly typed state
+  const [input, setInput] = useState<string>("");
+  const [selectedCenterId, setSelectedCenterId] = useState<string>("");
+  const [isCreatingUser, setIsCreatingUser] = useState<boolean>(false);
+
+  // Memoized computations to avoid expensive recalculations
+  const zip = useMemo(() => extractZipCode(input), [input]);
+  const matchingCenters = useMemo(() => getCentersByZip(zip || ""), [zip]);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyDP6ueoK8vJD2KTAsIxETW07TRHyf0Ar_I",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
   });
 
-  const handleNextStep = () => {
-    setUserDetails((prevUserDetails) => ({
-      ...prevUserDetails,
-      address: address.trim(),
-    }));
-    goNext();
-    navigate("/service");
+  // Optimized event handlers with useCallback
+  const handleCenterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedCenterId(event.target.value);
+    const centerinfo = matchingCenters.filter((c) =>
+      c.provider_id.includes(selectedCenterId)
+    );
+    setCenterDetails(centerinfo[0]);
   };
 
-  useEffect(() => {
-    // fetchAllCategories();
-  }, []);
+  console.log("Selected Center ID:", userDetails);
 
-  if (!isLoaded) return <div>Loading...</div>;
+  const createTempGuestUser = useCallback(
+    async (center_id: string): Promise<void> => {
+      const payload = {
+        center_id: center_id,
+        personal_info: {
+          first_name: "first name",
+          last_name: "last name",
+          email: `user${generateTenDigitRandomNumber()}@example.com`,
+          mobile_phone: {
+            phone: `${generateTenDigitRandomNumber()}`,
+            country_code: "+1",
+          },
+        },
+      };
+
+      try {
+        setIsCreatingUser(true);
+        const response = await guestUserCreation(payload);
+        console.log("Temporary guest user created:", response);
+        setGuestDetails({ user_id: response.id, ...payload });
+        console.log("Temporary guest user created:", response);
+      } catch (error) {
+        console.error("Error creating temporary guest user:", error);
+        throw error;
+      } finally {
+        setIsCreatingUser(false);
+      }
+    },
+    [setGuestDetails]
+  );
+
+  const handleNextStep = useCallback(async () => {
+    if (!selectedCenterId || !input.trim()) return;
+
+    try {
+      await createTempGuestUser(selectedCenterId);
+
+      setUserDetails((prevUserDetails) => ({
+        ...prevUserDetails,
+        address: input.trim(),
+      }));
+      console.log(centerDetails);
+
+      goNext();
+      navigate("/service", {
+        replace: true,
+        state: { centerId: selectedCenterId, fromPage: "location" },
+      });
+    } catch (error) {
+      console.error("Failed to proceed to next step:", error);
+    }
+  }, [
+    selectedCenterId,
+    input,
+    createTempGuestUser,
+    setUserDetails,
+    goNext,
+    navigate,
+  ]);
+
+  if (!isLoaded) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="200px"
+      >
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box pt={6} pl={{ xs: 0, md: 4 }}>
+      {/* Header Section */}
       <Box
-        display={"flex"}
+        display="flex"
         alignItems={{ xs: "center", md: "start" }}
-        flexDirection={"column"}
+        flexDirection="column"
       >
         <Typography
           variant="body1"
@@ -98,11 +180,14 @@ const Location = () => {
           Enter your address
         </Typography>
       </Box>
-      <Box width={{ sx: 250, md: 650 }} py={4}>
+
+      {/* Address Input */}
+      <Box width={{ xs: 250, md: 650 }} py={4}>
         <PlacesAutocomplete input={input} setInput={setInput} />
       </Box>
-      <Box px={{ xs: 2.5, md: 0 }} mb={4} width={{ sx: 250, md: 600 }}>
-        {/* Center List UI */}
+
+      {/* Center Selection */}
+      <Box px={{ xs: 2.5, md: 0 }} mb={4} width={{ xs: 250, md: 600 }}>
         {zip && (
           <Paper
             elevation={1}
@@ -110,43 +195,49 @@ const Location = () => {
               p: 2,
               mb: 2,
               border: `2px solid ${
-                matchingCenters.length > 0 ? GREEN_BORDER : RED_TEXT
+                matchingCenters.length > 0 ? BORDER : RED_TEXT
               }`,
-              background: matchingCenters.length > 0 ? "#F7FFF7" : "#FFF7F7",
+              background: "#FFF7F7",
             }}
           >
             <Typography variant="subtitle1" fontWeight={700} mb={1}>
               Centers serving zip code {zip}:
             </Typography>
-            {matchingCenters.length > 0 ? (
-              <List dense>
-                {matchingCenters.map((center, idx) => (
-                  <ListItem key={center.provider_id}>
-                    <ListItemText
-                      primary={
-                        <span>
-                          <b>{idx + 1}.</b> {center.name}
-                        </span>
-                      }
+            <FormControl component="fieldset">
+              {matchingCenters.length > 0 ? (
+                <RadioGroup
+                  aria-labelledby="center-selection-group"
+                  name="center-selection"
+                  value={selectedCenterId}
+                  onChange={handleCenterChange}
+                >
+                  {matchingCenters.map((center: Center) => (
+                    <FormControlLabel
+                      key={center.provider_id}
+                      value={center.provider_id}
+                      control={<Radio />}
+                      label={center.name}
                     />
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Typography
-                variant="body2"
-                sx={{ color: RED_TEXT, fontWeight: 600 }}
-              >
-                No centers found for this zip code.
-              </Typography>
-            )}
+                  ))}
+                </RadioGroup>
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{ color: RED_TEXT, fontWeight: 600 }}
+                >
+                  No centers found for this zip code.
+                </Typography>
+              )}
+            </FormControl>
           </Paper>
         )}
       </Box>
+
+      {/* Navigation Buttons */}
       <Box>
         <Stack direction="row" spacing={1}>
           <Button
-            disabled={true}
+            disabled
             sx={{
               textTransform: "none",
               color: "black",
@@ -159,14 +250,18 @@ const Location = () => {
             variant="contained"
             disableElevation
             onClick={handleNextStep}
+            disabled={!selectedCenterId || isCreatingUser}
             size="large"
             sx={{
               textTransform: "none",
-              backgroundColor: "Black",
+              backgroundColor: "black",
               width: { xs: "100%", md: "auto" },
+              "&:hover": {
+                backgroundColor: "#333",
+              },
             }}
           >
-            Next
+            {isCreatingUser ? "loading..." : "Next"}
           </Button>
         </Stack>
       </Box>
