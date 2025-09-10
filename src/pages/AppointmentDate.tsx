@@ -4,6 +4,7 @@ import { useStepper } from "../store/StepperContext";
 import { useNavigate } from "react-router-dom";
 import { useUserDetails } from "../store/UserContext";
 import { useState } from "react";
+import TestimonialBox from "../common/TestimonialBox";
 
 const AppointmentDate = () => {
   const { goBack, goNext } = useStepper();
@@ -151,6 +152,7 @@ const AppointmentDate = () => {
             Next
           </Button>
         </Stack>
+        <TestimonialBox currentStep={2} />
       </Box>
     </Box>
   );
