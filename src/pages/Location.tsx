@@ -17,6 +17,8 @@ import { Centers, type Center } from "../data/Centers";
 import { guestUserCreation } from "../api/zenoti-api/services/zenotiService";
 import { useUserDetails } from "../store/UserContext";
 import { useStepper } from "../store/StepperContext";
+import ResponsiveTestimonialBox from "../common/TestimonialBox";
+import TestimonialBox from "../common/TestimonialBox";
 
 // Constants moved outside component to prevent recreation
 const BORDER = "#8B4513";
@@ -120,7 +122,6 @@ const Location: React.FC = () => {
 
       goNext();
       navigate("/service", {
-        replace: true,
         state: { centerId: selectedCenterId, fromPage: "location" },
       });
     } catch (error) {
@@ -182,12 +183,12 @@ const Location: React.FC = () => {
       </Box>
 
       {/* Address Input */}
-      <Box width={{ xs: 250, md: 650 }} py={4}>
+      <Box width={{ xs: 520, md: 650 }} ml={{ xs: 2, md: 0 }} mt={4} mb={2}>
         <PlacesAutocomplete input={input} setInput={setInput} />
       </Box>
 
       {/* Center Selection */}
-      <Box px={{ xs: 2.5, md: 0 }} mb={4} width={{ xs: 250, md: 600 }}>
+      <Box px={{ xs: 2.5, md: 0 }} mb={4} width={{ xs: 550, md: 600 }}>
         {zip && (
           <Paper
             elevation={1}
@@ -265,6 +266,7 @@ const Location: React.FC = () => {
           </Button>
         </Stack>
       </Box>
+      <TestimonialBox currentStep={1} />
     </Box>
   );
 };

@@ -1,21 +1,21 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import { globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import { globalIgnores } from 'eslint/config';
 
 export default tseslint.config([
   globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],
-    rules:{
-     ' @typescript-eslint/no-explicit-any': 'off',
-     ' @typescript-eslint/ban-ts-comment': 'off',
-     ' @typescript-eslint/no-non-null-assertion': 'off',
-     ' @typescript-eslint/no-unused-vars': 'warn',
-     ' react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',  
+    rules: {
+      ' @typescript-eslint/no-explicit-any': 'off',
+      ' @typescript-eslint/ban-ts-comment': 'off',
+      ' @typescript-eslint/no-non-null-assertion': 'off',
+      ' @typescript-eslint/no-unused-vars': 'warn',
+      ' react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
     },
     extends: [
       js.configs.recommended,
@@ -28,4 +28,4 @@ export default tseslint.config([
       globals: globals.browser,
     },
   },
-])
+]);

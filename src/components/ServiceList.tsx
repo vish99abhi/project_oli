@@ -16,6 +16,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import { getSerivcesByCenterId } from "../api/zenoti-api/services/zenotiService";
+import PanoramaFishEyeIcon from "@mui/icons-material/PanoramaFishEye";
 
 // ====== Types ======
 type AddOn = {
@@ -66,9 +67,7 @@ const ServiceRow = memo(
           <Checkbox
             checked={checked}
             onChange={onServiceToggle}
-            icon={
-              <CheckCircleOutlineIcon sx={{ color: BROWN, opacity: 0.5 }} />
-            }
+            icon={<PanoramaFishEyeIcon sx={{ color: BROWN, opacity: 1.5 }} />}
             checkedIcon={<CheckCircleIcon sx={{ color: BROWN }} />}
             sx={{ p: 1.5 }}
           />
@@ -466,6 +465,22 @@ export default function ServiceAccordionList({
     [fetchServices]
   );
 
+  // Helper functions
+  const calculateTotalPrice = (payload: any) => {
+    return payload.reduce(
+      (total: any, category: any) =>
+        total +
+        category.services.reduce(
+          (categoryTotal: any, service: any) =>
+            categoryTotal + (service.serviceData?.price_info?.sale_price || 0),
+          0
+        ),
+      0
+    );
+  };
+
+  const formatPrice = (price: any) => `$${price}`;
+
   // **Enhanced selection object with complete service and add-on data**
   const getSelectionPayload = useMemo(() => {
     const result: Array<{
@@ -540,42 +555,6 @@ export default function ServiceAccordionList({
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Display selection summary */}
-      {getSelectionPayload.length > 0 && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            bgcolor: "rgba(185,144,114,0.08)",
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1, color: BROWN }}>
-            Selected Services Summary:
-          </Typography>
-          {getSelectionPayload.map((category) => (
-            <Box key={category.categoryId} sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {category.categoryName}: {category.services.length} service(s)
-              </Typography>
-              {category.services.map((service) => (
-                <Typography
-                  key={service.serviceId}
-                  variant="body2"
-                  sx={{ ml: 2, color: TEXT_MUTED }}
-                >
-                  • {service.serviceData?.name}
-                  {service.selectedAddOns.length > 0 &&
-                    ` (+${service.selectedAddOns.length} add-on${
-                      service.selectedAddOns.length > 1 ? "s" : ""
-                    })`}
-                </Typography>
-              ))}
-            </Box>
-          ))}
-        </Box>
-      )}
-
       {categories?.map((cat: any) => {
         const services = servicesByCategory[cat.id];
         const selectedServiceIds =
@@ -600,6 +579,89 @@ export default function ServiceAccordionList({
           />
         );
       })}
+      {/* Display selection summary */}
+      {getSelectionPayload.length > 0 && (
+        <Box
+          sx={{
+            mb: 2,
+            p: 2,
+            bgcolor: "rgba(185,144,114,0.08)",
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1, color: BROWN }}>
+            Selected Services Summary:
+          </Typography>
+          {getSelectionPayload.map((category) => (
+            <Box key={category.categoryId} sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {category.categoryName}: {category.services.length} service(s)
+              </Typography>
+              {category.services.map((service) => (
+                <Box
+                  key={service.serviceId}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    ml: 2,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: TEXT_MUTED }}>
+                    • {service.serviceData?.name}
+                    {service.selectedAddOns.length > 0 &&
+                      ` (+${service.selectedAddOns.length} add-on${
+                        service.selectedAddOns.length > 1 ? "s" : ""
+                      })`}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: BROWN,
+                    }}
+                  >
+                    {formatPrice(
+                      service.serviceData?.price_info?.sale_price || 0
+                    )}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          ))}
+
+          {/* Total Price Section */}
+          <Box
+            sx={{
+              mt: 2,
+              pt: 2,
+              borderTop: `1px solid ${BROWN}`,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                color: BROWN,
+              }}
+            >
+              Total:
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                color: BROWN,
+              }}
+            >
+              {formatPrice(calculateTotalPrice(getSelectionPayload))}
+            </Typography>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }
